@@ -17,28 +17,25 @@ int main(int argc, char* argv[])
 
 		tcp::resolver resolver(io_context);
 		tcp::resolver::results_type endpoints =
-			resolver.resolve("127.0.0.1", "2012");
+			resolver.resolve("127.0.0.1", "2014");
 
 		tcp::socket socket(io_context);
 		asio::connect(socket, endpoints);
 
 		asio::error_code ignored_error;
-		socket.write_some(asio::buffer("get"), ignored_error);
+		std::string sendStr = "    get";
+		*(int*)&sendStr[0] = sendStr.size()-4;
+		asio::write(socket, asio::buffer(sendStr), ignored_error);
 
-		for (;;)
-		{
-			std::array<char, 128> buf;
-			asio::error_code error;
-
-			buf[socket.read_some(asio::buffer(buf), error)] = '\0';
-
-			if (error == asio::error::eof)
-				break; // Connection closed cleanly by peer.
-			else if (error)
-				throw asio::system_error(error); // Some other error.
-			std::string str(buf.data());
-			std::cout << str << std::endl;
-		}
+		std::array<char, 128> buf;
+		asio::error_code error;
+		buf[asio::read(socket, asio::buffer(buf), error)] = '\0';
+		//if (error == asio::error::eof)
+		//	break; // Connection closed cleanly by peer.
+		//else if (error)
+		//	throw asio::system_error(error); // Some other error.
+		std::string str(buf.data());
+		std::cout << str << std::endl;
 	}
 	catch (std::exception& e)
 	{
