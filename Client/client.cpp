@@ -27,14 +27,20 @@ int main(int argc, char* argv[])
 		*(int*)&sendStr[0] = sendStr.size()-4;
 		asio::write(socket, asio::buffer(sendStr), ignored_error);
 
-		std::array<char, 128> buf;
+		asio::streambuf buf;
+		//std::array<char, 128> buf;
 		asio::error_code error;
-		buf[asio::read(socket, asio::buffer(buf), error)] = '\0';
+		asio::read(socket, buf, asio::transfer_exactly(4), error);
+		int tranSize = *asio::buffer_cast<const int*>(buf.data());
+		buf.consume(4);
+		asio::read(socket, buf, asio::transfer_exactly(tranSize), error);
+		//buf[asio::read(socket, asio::buffer(buf), error)] = '\0';
 		//if (error == asio::error::eof)
 		//	break; // Connection closed cleanly by peer.
 		//else if (error)
 		//	throw asio::system_error(error); // Some other error.
-		std::string str(buf.data());
+		//std::string str(buf.data());
+		std::string str(asio::buffers_begin(buf.data()), asio::buffers_end(buf.data()));
 		std::cout << str << std::endl;
 	}
 	catch (std::exception& e)
